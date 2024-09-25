@@ -42,4 +42,11 @@ export type ApparatustType = {
 export type CreateTeamType = {
   name: string;
   logo?: string;
-}
+};
+
+export type CreateStaffType = {
+  name: string;
+  email?: string;
+  phone?: string;
+  role: string;
+};
