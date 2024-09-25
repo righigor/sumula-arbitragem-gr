@@ -8,8 +8,12 @@ export default class ChampionshipService {
 
     public createChampionship = async (obj: CreateChampionshipType) => {
         try {
-            const objParsed = CreateChampionshipSchema.parse(obj);
-            const { data } = this.championshipModel.createChampionship(objParsed);
+            const objParsed = CreateChampionshipSchema.parse({
+                ...obj,
+                startDate: new Date(obj.startDate),
+                endDate: new Date(obj.endDate)
+            });
+            const { data } = await this.championshipModel.createChampionship(objParsed);
 
             if (!data) {
                 return { status: 'INTERNAL_SERVER_ERROR', data: { message: 'Erro ao criar o campeonato' } }
