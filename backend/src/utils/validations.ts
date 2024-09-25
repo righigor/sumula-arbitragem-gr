@@ -18,4 +18,14 @@ export const checkExistsApparatus = async (id: string) => {
   });
 
   return result ? true : false;
-}
+};
+
+export const checkExistsTeam = async (id: string) => {
+  const result = await prisma.team.findFirst({
+    where: {
+      id,
+    },
+  });
+
+  return result ? true : false;
+};

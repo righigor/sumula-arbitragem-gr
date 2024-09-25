@@ -38,3 +38,8 @@ export type ApparatustType = {
   updatedAt: Date;
   competitionId: string;
 };
+
+export type CreateTeamType = {
+  name: string;
+  logo?: string;
+}
