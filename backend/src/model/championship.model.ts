@@ -2,7 +2,7 @@ import { prisma } from "../lib/prisma";
 import { CreateChampionshipType } from "../utils/types";
 
 export default class ChampionshipModel {
-    public createChampionship({
+    public async createChampionship({
         name,
         description,
         startDate,
@@ -13,7 +13,7 @@ export default class ChampionshipModel {
         address,
         owner
     }: CreateChampionshipType) {
-        const result = prisma.championship.create({
+        const result = await prisma.championship.create({
             data: {
                 name,
                 description,

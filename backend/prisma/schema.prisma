@@ -35,15 +35,71 @@ model Championship {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  teams             Team[]
-  playerApparatus   PlayerApparatus[]
-  playerCompetition PlayerCompetition[]
-  apparatus         Apparatus[]
-  categories        Category[]
-  referees          Referee[]
-  scoreTypes        ScoreType[]
+  teams                    Team[]
+  playerScoreByApparatus   PlayerScoreByApparatus[]
+  finalIndivdualScore      FinalIndividualScore[]
+  apparatus                Apparatus[]
+  categories               Category[]
+  referees                 Referee[]
+  scoreTypesOfReferee      ScoreTypeOfReferee[]
+  playerWithTheirApparatus PlayerAndApparatus[]
 
   @@map("championships")
+}
+
+// Table to store the referees
+model Referee {
+  id    String  @id @default(cuid())
+  name  String
+  email String?
+  phone String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  competitionId String
+  competition   Championship @relation(fields: [competitionId], references: [id])
+
+  scoreTypeOfRefereeId String
+  scoreTypeOfReferee   ScoreTypeOfReferee @relation(fields: [scoreTypeOfRefereeId], references: [id])
+
+  playerScoreByReferee PlayerScoreByReferee[]
+
+  @@map("referees")
+}
+
+// Table to store the score types
+model ScoreTypeOfReferee {
+  id   String @id @default(cuid())
+  name String // name of the score type = A1, A2, E1, E2, etc.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  competitionId String
+  competition   Championship @relation(fields: [competitionId], references: [id])
+
+  referees Referee[]
+
+  @@map("score_types")
+}
+
+// Table to store the categories
+model Category {
+  id    String @id @default(cuid())
+  name  String
+  level Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  competitionId String
+  competition   Championship @relation(fields: [competitionId], references: [id])
+
+  players              Player[]
+  finalIndividualScore FinalIndividualScore[]
+
+  @@map("categories")
 }
 
 // Table to store the apparatus
@@ -57,7 +113,9 @@ model Apparatus {
   competitionId String
   competition   Championship @relation(fields: [competitionId], references: [id])
 
-  playerApparatus PlayerApparatus[]
+  playerScoreByApparatus PlayerScoreByApparatus[]
+  PlayerScoreByReferee   PlayerScoreByReferee[]
+  players                PlayerAndApparatus[]
 
   @@map("apparatus")
 }
@@ -102,7 +160,6 @@ model Player {
   id        String   @id @default(cuid())
   name      String
   birthDate DateTime
-  level     Int
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
@@ -110,17 +167,59 @@ model Player {
   teamId String
   team   Team   @relation(fields: [teamId], references: [id])
 
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  scores            PlayerScore[]
-  playerApparatus   PlayerApparatus[]
-  playerCompetition PlayerCompetition[]
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  
+  scoresByReferee        PlayerScoreByReferee[]
+  playerScoreByApparatus PlayerScoreByApparatus[]
+  finalIndividualScore   FinalIndividualScore[]
+  apparatus              PlayerAndApparatus[]
 
   @@map("players")
 }
 
-// Table to store the player's scores by apparatus
-model PlayerApparatus {
+// Table to store the player's apparatus and the apparatus used in the competition
+model PlayerAndApparatus {
+  id String @id @default(cuid())
+
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id])
+
+  apparatusId String
+  apparatus   Apparatus @relation(fields: [apparatusId], references: [id])
+
+  competitionId String
+  competition   Championship @relation(fields: [competitionId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([playerId, apparatusId, competitionId])
+  @@map("player_and_apparatus")
+}
+
+// Table to store the player's scores by the referees by score type
+model PlayerScoreByReferee {
+  id    String @id @default(cuid())
+  score Float // score given by the referee
+
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id])
+
+  refereeId String
+  referee   Referee @relation(fields: [refereeId], references: [id])
+
+  apparatusId String
+  apparatus   Apparatus @relation(fields: [apparatusId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("player_scores_by_referee")
+}
+
+// Table to store the player's all scores and total by apparatus
+model PlayerScoreByApparatus {
   id String @id @default(cuid())
 
   playerId String
@@ -138,94 +237,27 @@ model PlayerApparatus {
   updatedAt DateTime @updatedAt
 
   @@unique([playerId, apparatusId, competitionId])
-  @@map("player_apparatus")
+  @@map("player_scores_by_apparatus")
 }
 
-// Table to store the player's total scores by competition
-model PlayerCompetition {
+// Table to store final individual scores of the players
+model FinalIndividualScore {
   id String @id @default(cuid())
 
   competitionId String
   competition   Championship @relation(fields: [competitionId], references: [id])
 
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
   playerId String
   player   Player @relation(fields: [playerId], references: [id])
 
-  totalScore Float // total score of the player in the competition
+  totalScore Float // total score of the player in the competition (sum of all apparatus)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([playerId, categoryId])
   @@map("player_competitions")
-}
-
-// Table to store the categories
-model Category {
-  id    String @id @default(cuid())
-  name  String
-  level Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  competitionId String
-  competition   Championship @relation(fields: [competitionId], references: [id])
-
-  players Player[]
-
-  @@map("categories")
-}
-
-// Table to store the referees
-model Referee {
-  id    String  @id @default(cuid())
-  name  String
-  email String?
-  phone String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  competitionId String
-  competition   Championship @relation(fields: [competitionId], references: [id])
-
-  playerScore PlayerScore[]
-
-  @@map("referees")
-}
-
-// Table to store the score types
-model ScoreType {
-  id   String @id @default(cuid())
-  name String // name of the score type
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  competitionId String
-  competition   Championship @relation(fields: [competitionId], references: [id])
-
-  PlayerScore PlayerScore[]
-
-  @@map("score_types")
-}
-
-// Table to store the player's scores by the referees by score type
-model PlayerScore {
-  id    String @id @default(cuid())
-  score Float // score given by the referee
-
-  playerId String
-  player   Player @relation(fields: [playerId], references: [id])
-
-  scoreTypeId String
-  scoreType   ScoreType @relation(fields: [scoreTypeId], references: [id])
-
-  refereeId String
-  referee   Referee @relation(fields: [refereeId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("player_scores")
 }
