@@ -50,3 +50,8 @@ export type CreateStaffType = {
   phone?: string;
   role: string;
 };
+
+export type CreateCategoryType = {
+  name: string;
+  level: number;
+};
